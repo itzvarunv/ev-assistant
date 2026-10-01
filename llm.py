@@ -57,11 +57,17 @@ def _gemini(messages, json_mode):
     if json_mode:
         body["generationConfig"]["responseMimeType"] = "application/json"
     # GEMINI_MODEL can list backups ("a,b,c"): a busy or retired model falls through to the next one.
+    r = None
     for model in [m.strip() for m in config.GEMINI_MODEL.split(",") if m.strip()]:
-        r = requests.post(GEMINI_URL.format(model=model), json=body, timeout=120,
-                          headers={"x-goog-api-key": config.GEMINI_API_KEY})   # header, so the key never sits in URLs/logs
+        try:
+            r = requests.post(GEMINI_URL.format(model=model), json=body, timeout=25,   # a stalled model shouldn't hold you up
+                              headers={"x-goog-api-key": config.GEMINI_API_KEY})   # header, so the key never sits in URLs/logs
+        except (requests.Timeout, requests.ConnectionError):
+            continue
         if r.status_code not in (404, 429, 500, 502, 503, 504):
             break
+    if r is None:
+        raise requests.Timeout("every Gemini model timed out")
     r.raise_for_status()
     candidates = r.json().get("candidates") or [{}]
     return "".join(p.get("text", "") for p in candidates[0].get("content", {}).get("parts", []))

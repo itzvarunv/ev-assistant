@@ -23,8 +23,8 @@ INSTRUCTIONS = """Answer ONLY with a JSON object with exactly these keys:
 }
 Most questions do NOT need OWNER - answer them yourself. Choose "action":
 - "answer": you can answer it yourself from ABOUT OWNER, your knowledge, documents, search results or common sense.
-- "search": it's a factual question (prices, how-to, places, news, definitions, recommendations) and you're not
-  sure of the answer. Give a precise "search_query"; you'll get web results and answer after.
+- "search": you CAN search the web. Use it for anything current (news, weather, prices, scores, opening hours)
+  or factual you're not sure of (how-to, places, recommendations). Never say you lack real-time access. Give a precise "search_query"; you'll get web results and answer after.
 - "ask_details": it truly needs OWNER (meeting, call, favour, payment, decision, private info not in ABOUT OWNER) but you don't yet know
   what exactly, when, where and how much. Ask for ALL missing details in one short message.
 - "hand_to_owner": it needs OWNER and you have the details. Fill "task". Your "reply" is ignored.
@@ -64,11 +64,14 @@ def build_system_prompt(db, contact_id, text):
 
 
 def ask_model(messages):
-    try:
-        out = json.loads(llm.chat(messages, json_mode=True))
-        return out if isinstance(out, dict) else {}
-    except (json.JSONDecodeError, ValueError):
-        return {}
+    for _ in range(2):                          # cloud models sometimes return an empty answer - try once more
+        try:
+            out = json.loads(llm.chat(messages, json_mode=True))
+            if isinstance(out, dict) and out:
+                return out
+        except (json.JSONDecodeError, ValueError):
+            pass
+    return {}
 
 
 def needs_intro(db, contact_id):

@@ -1,72 +1,70 @@
 # EV Assistant
 
-An AI assistant that answers WhatsApp messages on **your own number**, using the official WhatsApp Cloud API with Coexistence.
-- It always introduces itself as "EV, <your name>'s AI assistant". It never confirms anything for you.
-- It collects the details and turns anything that needs you into a task.
+A personal WhatsApp assistant (official WhatsApp Cloud API) that remembers your schedule, reminds you,
+and answers quick questions. It's a learning project, not a polished product. Read **Current status** first.
 
-## Your personal assistant (messages from OWNER_PHONE)
-- Write normally, e.g. "Math test Saturday 10am", "dentist tomorrow 5pm, remind me an hour before",
-  "physics class every day at 8am", or send a photo of a timetable or notice.
-- EV confirms the exact date back to you, so you can catch mistakes.
-- Reminders arrive before the event (30 min by default) and again at the time.
-- A morning summary arrives at `MORNING_SUMMARY` (default 07:30).
-- Commands: `today`, `tomorrow`, `week`, `cancel <id>`, `help`. Ask questions any time.
-- WhatsApp only lets EV message you within 24 h of your last message.
-  - Reply 👍 once a day. EV nudges you after `KEEPALIVE_HOURS` (20 h) of silence.
-  - Anything it couldn't deliver arrives when you next write, marked as late.
+## Current status (honest version)
 
-## Answering on its own (most messages)
-- **about_me.md** (copy `about_me.example.md`; it's git-ignored): write what anyone may know about you (work, when you're free, your usual answers). This is the biggest quality win.
-- **Web search**: for factual questions EV searches the web, answers from the results and saves them for next time.
-  - Free DuckDuckGo by default.
-  - Set `SEARCH_PROVIDER=brave` and `BRAVE_API_KEY` for more reliable results.
-- **Photos**:
-  - The vision model reads photos and stickers people send (bills, error screens, products).
-  - It picks up text, amounts and dates.
-  - EV answers from that, or makes a task for you.
-  - Their photos are deleted once read.
-  - Test it in `main.py` → C with `img /path/photo.jpg your caption`.
-- **Region**: set `REGION` (e.g. `London, UK`) so answers use local prices, shops and rules.
-- **Requests that need you** (money, meetings, favours):
-  - EV asks for the missing details once.
-  - The next message becomes a task for you.
-  - EV never agrees on your behalf.
+**What runs today:** a reminder bot on Meta's free **test number**, on an Oracle Cloud Always Free Micro VM,
+with Google's **Gemini free API** as the AI. Only you (the owner) chat with it.
 
-## How it behaves on your number
-- **Reply delay:** EV waits `REPLY_DELAY_SECONDS` (default 2 min), so you get the first chance to answer.
-- **You step in:** if you reply yourself from the WhatsApp Business app, EV stays quiet in that chat for `TAKEOVER_HOURS` (default 3 h).
-- **Skip list:** people on it are never answered by EV.
-- **Pause:** turn EV off for everyone from the dashboard.
-- **Group chats and calls:** not supported by the API, so they stay yours.
+**What works:**
+- Saves events from normal messages ("math test Saturday 10am", "class every weekday 8am") and confirms the exact date.
+- Reminds you before (30 min default) and at the time, plus a 07:30 morning summary.
+- Answers simple questions. Searches the web (DuckDuckGo) for news, prices, weather and similar.
 
-## Where you see things
-- **Dashboard:** `https://<server>/dashboard` (any username, your `DASHBOARD_PASSWORD`). It shows:
-  - tasks, with "Send & close" and "Done"
-  - who messaged and what they asked, with the full thread
-  - the most-asked topics
-  - the skip list
-  - document upload and public/private switches
-- **Reminders app:** run `bash deploy/install_mac_sync.sh` on your Mac once. New tasks are pulled into the "EV Assistant" list every 10 minutes while the Mac is on.
+**Limitations:**
+- **It is not a fully capable AI.** Free models misread messages now and then, so always check the date in its ✅ confirmation.
+- **Replies can be slow or fail.**
+  - The free Gemini tier is sometimes overloaded. A reply can take from a few seconds to about a minute while EV falls back to another model.
+  - If every model is busy, EV says so and you need to resend.
+- **Web search is basic.** Free DuckDuckGo results can be thin or rate-limited, and the AI sometimes answers from memory instead of searching.
+- **WhatsApp's 24 h rule:** EV can only message you within 24 h of your last message.
+  - Reply 👍 once a day. EV nudges you after 20 h.
+  - Reminders it couldn't deliver arrive late, marked as such.
+- **Test number only:** it can message just the few numbers you register in Meta.
+- **Not tested on real WhatsApp yet:**
+  - answering *other people* on your own number (Coexistence)
+  - the takeover/skip features
+  - the dashboard
+  - the Mac Reminders sync
 
-## Try it on your Mac (no WhatsApp needed)
-    .venv/bin/python main.py          # C = chat as a contact, O = owner commands, I = ingest folders
-Files in `public/` can go to anyone. Files in `inbox/` stay private until you make them public.
+  That needs a Meta-verified business or a paid partner.
+- **Privacy:** with `LLM_PROVIDER=gemini`, your messages to EV are processed by Google (free tier data may be used to improve their models).
 
-## Go live
-1. Switch your number to the WhatsApp **Business** app (free; chats carry over). Use it normally for a while.
-2. Get an always-on Ubuntu server, e.g. Oracle Cloud Always Free Ampere A1 (24 GB RAM, runs `qwen2.5:7b`).
-3. Connect the number to the Cloud API with **Coexistence**:
-   - Use a WhatsApp partner that supports it (e.g. 360dialog), or Meta's Embedded Signup as a Tech Provider.
-   - Subscribe the webhook to `messages` and `smb_message_echoes`.
-   - Contacts/history sync must be done within 24 h of onboarding.
-4. Copy the project to the server:
-   `rsync -av --exclude .venv --exclude data --exclude __pycache__ "EV assistant/" ubuntu@SERVER_IP:ev/`
-5. On the server:
-   - `cd ev && cp .env.example .env && nano .env` (leave `OWNER_PHONE` empty, set `DASHBOARD_PASSWORD`, `CHAT_MODEL=qwen2.5:7b`)
-   - `bash deploy/setup.sh`
-   - It prints the webhook URL. Paste it into Meta with your `WA_VERIFY_TOKEN`.
-6. On your Mac:
-   - Add `EV_SERVER_URL` and `DASHBOARD_PASSWORD` to `.env`.
-   - Run `bash deploy/install_mac_sync.sh`.
+## Using it (messages from OWNER_PHONE)
+- Write normally, e.g. "dentist tomorrow 5pm, remind me an hour before", or send a photo of a timetable.
+- Commands: `today`, `tomorrow`, `week`, `cancel <id>`, `help`.
+
+## Features in the code (built, mostly tested only locally)
+- **Answering other people** on your number, with a 2 min reply delay so you can answer first.
+- **Stepping aside:** if you reply yourself, EV stays quiet in that chat for 3 h.
+- **Skip list** and **pause switch**.
+- **Hand-offs:** requests that need you (money, meetings, favours) become tasks. EV asks for details once and never agrees on your behalf.
+- **Profile:** `about_me.md` holds facts about you that EV may share. Copy `about_me.example.md`; the real file is git-ignored.
+- **Documents:** files in `public/` can go to anyone. Files in `inbox/` stay private until you green-flag them.
+- **Photos:** EV reads photos people send (bills, error screens) with a vision model.
+- **Dashboard:** `https://<server>/dashboard`.
+- **Mac Reminders sync:** `deploy/install_mac_sync.sh`.
+
+## AI options (`LLM_PROVIDER` in `.env`)
+- **`gemini`:** Google's free API. Works on a 1 GB server. `GEMINI_MODEL` takes a comma-separated list of fallbacks.
+- **`ollama`:** local models, fully private.
+  - Needs about 8 GB+ RAM on the server (e.g. Oracle Ampere A1, often out of capacity).
+  - On an 8 GB laptop the 7B model is very slow.
+
+## Try it locally
+    python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+    cp .env.example .env        # fill it in
+    .venv/bin/python main.py    # C = chat as a contact, O = owner commands, I = ingest folders
+
+## Deploy (Ubuntu server)
+1. Copy the project: `rsync -av --exclude .venv --exclude data --exclude __pycache__ ./ ubuntu@SERVER_IP:ev/`
+2. On the server: create `.env` from `.env.example`, then run `bash deploy/setup.sh`. It installs everything and prints the webhook URL.
+3. In Meta: set that Callback URL with your `WA_VERIFY_TOKEN`, and subscribe to `messages`.
+   - Link your WhatsApp Business Account to the app (`POST /{waba-id}/subscribed_apps`), or no messages arrive.
+4. Use a permanent System User token (never expires) for `WA_TOKEN`. The "Try it out" token dies after 24 h.
 
 Logs: `journalctl -u ev-assistant -f` · Restart: `sudo systemctl restart ev-assistant`
+
+Secrets (`.env`), your profile (`about_me.md`), and chats/documents (`data/`, `inbox/`, `public/`) are git-ignored.

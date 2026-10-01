@@ -110,7 +110,11 @@ def handle_owner(db, msg):
         if first and first[0].lower() in OWNER_COMMANDS:
             reply = owner.handle_command(db, text, whatsapp.send_text)
         else:
-            reply = planner.handle(db, text)
+            try:
+                reply = planner.handle(db, text)
+            except Exception:
+                traceback.print_exc()
+                reply = "⚠️ My AI didn't respond just now (the free service is busy). Please send that again in a minute."
     else:
         reply = "I can read text and photos for now."
     whatsapp.send_text(config.OWNER_PHONE, reply)

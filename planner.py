@@ -31,7 +31,8 @@ Answer ONLY with a JSON object:
   Work out words like "tomorrow", "Friday", "next week" from the current time. No time given -> 09:00.
   remind_before_min is 30 unless {owner} asks for something else.
 - "cancel": {owner} wants to remove something from the schedule.
-- "search": a factual question you are not sure about. Give a precise search_query.
+- "search": you CAN search the web. Use it for news, weather, scores, prices, opening hours, anything current or
+  that you are not sure about. Never say you lack real-time access - search instead. Give a precise search_query.
 - "answer": everything else. Be short and practical."""
 
 
