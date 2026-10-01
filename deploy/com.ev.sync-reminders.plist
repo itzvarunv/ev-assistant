@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key><string>com.ev.sync-reminders</string>
+    <key>ProgramArguments</key>
+    <array><string>APP_DIR/.venv/bin/python</string><string>APP_DIR/sync_reminders.py</string></array>
+    <key>WorkingDirectory</key><string>APP_DIR</string>
+    <key>StartInterval</key><integer>600</integer>
+    <key>RunAtLoad</key><true/>
+    <key>StandardErrorPath</key><string>APP_DIR/data/sync_reminders.log</string>
+    <key>StandardOutPath</key><string>APP_DIR/data/sync_reminders.log</string>
+</dict>
+</plist>

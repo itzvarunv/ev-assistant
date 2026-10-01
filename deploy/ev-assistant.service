@@ -1,0 +1,14 @@
+[Unit]
+Description=EV WhatsApp assistant
+After=network-online.target ollama.service
+Wants=network-online.target
+
+[Service]
+User=APP_USER
+WorkingDirectory=APP_DIR
+ExecStart=APP_DIR/.venv/bin/python server.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

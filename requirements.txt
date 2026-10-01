@@ -1,0 +1,6 @@
+requests
+pymupdf
+beautifulsoup4
+flask
+waitress
+ddgs
